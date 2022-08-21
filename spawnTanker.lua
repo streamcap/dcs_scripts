@@ -183,7 +183,7 @@ function spawnTanker(params)
 		["x"] = start.x,
 		["name"] = "Aerial-1",
 		["communication"] = true,
-		["frequency"] = 260,
+		["frequency"] = 259,
 	} -- end of ["tankerGroup"]
 	coalition.addGroup(unit:getCountry(),Group.Category.AIRPLANE, tankerGroup)
 	trigger.action.outText("Spawned tanker", 10)
