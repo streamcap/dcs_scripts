@@ -10,6 +10,10 @@ end
 
 function spawnTanker(params)
 	local unit = params.unit
+	if unit == nil do
+		trigger.action.outText("Spawning failed", 10)
+		return
+	end
 	local unitpos = unit:getPosition()
 	local heading = math.atan2(unitpos.x.z, unitpos.x.x)
 	local start = getOffset(unitpos.p, heading, params.distance, params.altitude)	
@@ -191,5 +195,5 @@ end
 
 function registerSpawnTanker(me, distance, length, altitude)
 	local params = { ["unit"]=me, ["distance"]=distance, ["length"]=length, ["altitude"]=altitude }
-	missionCommands.addCommand("Spawn S-3B tanker " .. distance .. " NM ahead", nil, spawnTanker, params)
+	missionCommands.addCommand("Spawn S-3B tanker " .. distance .. " NM ahead of " .. me:getName(), nil, spawnTanker, params)
 end
