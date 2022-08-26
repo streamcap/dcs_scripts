@@ -10,7 +10,7 @@ end
 
 function spawnTanker(params)
 	local unit = params.unit
-	if unit == nil do
+	if unit == nil then
 		trigger.action.outText("Spawning failed", 10)
 		return
 	end
