@@ -196,4 +196,5 @@ end
 function registerSpawnTanker(me, distance, length, altitude)
 	local params = { ["unit"]=me, ["distance"]=distance, ["length"]=length, ["altitude"]=altitude }
 	missionCommands.addCommand("Spawn S-3B tanker " .. distance .. " NM ahead of " .. me:getName(), nil, spawnTanker, params)
+	trigger.action.outText("Registered tanker for " .. me:getName(), 10)
 end
