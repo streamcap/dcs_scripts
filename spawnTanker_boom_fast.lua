@@ -87,7 +87,7 @@ function spawnTanker(params)
 												["AA"] = false,
 												["unitId"] = 256,
 												["modeChannel"] = "X",
-												["channel"] = 11,
+												["channel"] = 10,
 												["system"] = 4,
 												["callsign"] = "TKR",
 												["bearing"] = true,
@@ -175,10 +175,10 @@ function spawnTanker(params)
 				["heading"] = 1.57,
 				["callsign"] = 
 				{
-					[1] = 1,
+					[1] = 3,
 					[2] = 1,
 					[3] = 1,
-					["name"] = "Texaco11",
+					["name"] = "Shell11",
 				}, -- end of ["callsign"]
 				["onboard_num"] = "010",
 			}, -- end of [1]
