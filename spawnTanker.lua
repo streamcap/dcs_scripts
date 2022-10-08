@@ -1,27 +1,12 @@
-function getOffset(point, heading, nauticals, altitude)
-	local metersDistance = nauticals * 1852
-	local metersAltitude = altitude / 3.28
+tankerTypes = 
+{
+	[1] = "KC-135",
+	[2] = "KC-135 MPRS",
+	[3] = "S-3B Tanker"
+}
+
+function getTanker(start, final, speed, tankertype)
 	return {
-		x=point.x + (metersDistance * math.cos(heading)), 
-		y=metersAltitude, 
-		z=point.z + (metersDistance * math.sin(heading))
-	}
-end
-
-function spawnTanker(params)
-	local unit = params.unit
-	if unit == nil then
-		trigger.action.outText("Spawning failed", 10)
-		return
-	end
-	local unitpos = unit:getPosition()
-	local heading = math.atan2(unitpos.x.z, unitpos.x.x)
-	local start = getOffset(unitpos.p, heading, params.distance, params.altitude)	
-	local final = getOffset(start, heading, params.length, params.altitude)
-	local speed = (0.001 * params.altitude) + 166
-
-	local tankerGroup = 
-	{
 		["radioSet"] = true,
 		["task"] = "Refueling",
 		["route"] = 
@@ -157,7 +142,7 @@ function spawnTanker(params)
 				["livery_id"] = "usaf standard",
 				["skill"] = "High",
 				["speed"] = speed,
-				["type"] = "KC-135 MPRS",
+				["type"] = tankertype,
 				["psi"] = -2.0158125515504,
 				["y"] = start.z,
 				["x"] = start.x,
@@ -189,12 +174,54 @@ function spawnTanker(params)
 		["communication"] = true,
 		["frequency"] = 259,
 	} -- end of ["tankerGroup"]
-	coalition.addGroup(unit:getCountry(),Group.Category.AIRPLANE, tankerGroup)
+end
+
+function getOffset(point, heading, nauticals, altitude)
+	local metersDistance = nauticals * 1852
+	local metersAltitude = altitude / 3.28
+	return {
+		x=point.x + (metersDistance * math.cos(heading)), 
+		y=metersAltitude, 
+		z=point.z + (metersDistance * math.sin(heading))
+	}
+end
+
+function getSpeed(altitude, fast) 
+	local baseSpeed = 126
+	if fast then 
+		baseSpeed = baseSpeed + 40 
+	end
+	return (0.001 * altitude) + 166
+
+end
+
+function spawnTanker(params)
+	local unit = params.unit
+	if unit == nil then
+		trigger.action.outText("Spawning failed", 10)
+		return
+	end
+	local unitpos = unit:getPosition()
+	local heading = math.atan2(unitpos.x.z, unitpos.x.x)
+	local start = getOffset(unitpos.p, heading, params.distance, params.altitude)	
+	local final = getOffset(start, heading, params.length, params.altitude)
+	local speed = getSpeed(params.altitude, params.fast)
+	local tankergroup = getTanker(start, final, speed, params.tankertype)
+	coalition.addGroup(unit:getCountry(),Group.Category.AIRPLANE, tankergroup)
 	trigger.action.outText("Spawned tanker", 10)
 end
 
-function registerSpawnTanker(me, distance, length, altitude)
-	local params = { ["unit"]=me, ["distance"]=distance, ["length"]=length, ["altitude"]=altitude }
-	missionCommands.addCommand("Spawn S-3B tanker " .. distance .. " NM ahead of " .. me:getName(), nil, spawnTanker, params)
-	env.info("Registered tanker for " .. me:getName())
+function registerSpawnTanker(me, distance, length, altitude, tankertype, fast)
+	local params = { 
+		["unit"]=me, 
+		["distance"]=distance, 
+		["length"]=length, 
+		["altitude"]=altitude, 
+		["type"] = tankerTypes[tankertype], 
+		["fast"]=fast 
+	}
+	var command = "Spawn ".. tankerTypes[tankertype] .. " " .. distance .. " NM ahead of " .. me:getName() .. " fast: " .. tostring(fast)
+	missionCommands.addCommand(command, nil, spawnTanker, params)
+	trigger.action.outText(command, 5)
+	env.info(command)
 end

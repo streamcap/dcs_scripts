@@ -189,12 +189,12 @@ function spawnTanker(params)
 		["communication"] = true,
 		["frequency"] = 259,
 	} -- end of ["tankerGroup"]
-	coalition.addGroup(unit:getCountry(),Group.Category.AIRPLANE, tankerGroup)
+	coalition.addGroup(unit:getCountry(), Group.Category.AIRPLANE, tankerGroup)
 	trigger.action.outText("Spawned tanker", 10)
 end
 
-function registerSpawnTanker(me, distance, length, altitude)
-	local params = { ["unit"]=me, ["distance"]=distance, ["length"]=length, ["altitude"]=altitude }
+function registerSpawnTanker(me, distance, length, altitude, fast)
+	local params = { ["unit"]=me, ["distance"]=distance, ["length"]=length, ["altitude"]=altitude, ["fast"]=fast }
 	missionCommands.addCommand("Spawn KC-135 " .. distance .. " NM ahead of " .. me:getName(), nil, spawnTanker, params)
 	env.info("Registered tanker for " .. me:getName())
 end
