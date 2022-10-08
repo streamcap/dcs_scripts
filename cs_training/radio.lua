@@ -235,10 +235,10 @@ function createRadioReadyZoneSet()
 	if theatre == "MarianaIslands" then
 		return createMarianasRadioReadyZoneSet()
 	end
-	if theatre == "Caucasus" then
-		return createCaucasusRadioReadyZoneSet()
-	end
-	return {}
+	--if theatre == "Caucasus" then
+	return createCaucasusRadioReadyZoneSet()
+	--end
+	--return {}
 end
 
 function addGroupRadioEntryForGroundGroup(groupId, groupData, listSpawnedSubMenu)
