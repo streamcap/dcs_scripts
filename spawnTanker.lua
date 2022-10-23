@@ -1,11 +1,34 @@
 tankerTypes = 
 {
-	[1] = "KC-135",
-	[2] = "KC-135 MPRS",
-	[3] = "S-3B Tanker"
+	[1] = {["name"]="KC-135",["fuel"]="90500"},
+	[2] = {["name"]="KC135MPRS",["fuel"]="90500"},
+	[3] = {["name"]="S-3B Tanker",["fuel"]="7800"},
+	[4] = {["name"]="KC130",["fuel"]="29500"}
 }
 
-function getTanker(start, final, speed, tankertype)
+function tacanFrequency( channel, mode )
+    if ( mode == "Y" and channel < 64 ) then
+        local basef = 1087000000
+        local offset = 1000000 * channel
+        return basef + offset
+    elseif( mode == "X" and channel < 64 ) then
+        local basef = 961000000
+        local offset = 1000000 * channel
+        return basef + offset
+    elseif ( mode == "Y" and channel > 63 ) then
+        local basef = 961000000
+        local offset = 1000000 * channel
+        return basef + offset
+    elseif( mode == "X" and channel > 63 ) then
+        local basef = 1087000000
+        local offset = 1000000 * channel
+        return basef + offset
+    end        
+end
+
+function getTanker(start, final, speed, tankertype, tacan, mode, freq)
+	local tacanFreq = tacanFrequency(tacan, mode)
+	trigger.action.outText("Set tacan " .. tacan .. mode .. " and freq " .. freq, 10)
 	return {
 		["radioSet"] = true,
 		["task"] = "Refueling",
@@ -71,12 +94,12 @@ function getTanker(start, final, speed, tankertype)
 												["type"] = 4,
 												["AA"] = false,
 												["unitId"] = 256,
-												["modeChannel"] = "X",
-												["channel"] = 11,
+												["modeChannel"] = mode,
+												["channel"] = tacan,
 												["system"] = 4,
 												["callsign"] = "TKR",
 												["bearing"] = true,
-												["frequency"] = 972000000,
+												["frequency"] = tacanFreq,
 											}, -- end of ["params"]
 										}, -- end of ["action"]
 									}, -- end of ["params"]
@@ -142,7 +165,7 @@ function getTanker(start, final, speed, tankertype)
 				["livery_id"] = "usaf standard",
 				["skill"] = "High",
 				["speed"] = speed,
-				["type"] = tankertype,
+				["type"] = tankertype.name,
 				["psi"] = -2.0158125515504,
 				["y"] = start.z,
 				["x"] = start.x,
@@ -152,10 +175,10 @@ function getTanker(start, final, speed, tankertype)
 					["pylons"] = 
 					{
 					}, -- end of ["pylons"]
-					["fuel"] = "7813",
+					["fuel"] = tankertype.fuel,
 					["flare"] = 30,
 					["chaff"] = 30,
-					["gun"] = 100,
+					--["gun"] = 100,
 				}, -- end of ["payload"]
 				["heading"] = 1.57,
 				["callsign"] = 
@@ -170,15 +193,17 @@ function getTanker(start, final, speed, tankertype)
 		}, -- end of ["units"]
 		["y"] = start.z,
 		["x"] = start.x,
-		["name"] = "Aerial-1",
+		["name"] = "tanker-1",
 		["communication"] = true,
-		["frequency"] = 259,
+		["frequency"] = freq,
 	} -- end of ["tankerGroup"]
 end
 
-function getOffset(point, heading, nauticals, altitude)
+
+
+function getOffset(point, heading, nauticals, altfeet)
 	local metersDistance = nauticals * 1852
-	local metersAltitude = altitude / 3.28
+	local metersAltitude = altfeet / 3.28
 	return {
 		x=point.x + (metersDistance * math.cos(heading)), 
 		y=metersAltitude, 
@@ -186,9 +211,9 @@ function getOffset(point, heading, nauticals, altitude)
 	}
 end
 
-function getSpeed(altitude, fast) 
+function getSpeed(altitude, isfast) 
 	local baseSpeed = 126
-	if fast then 
+	if isfast then 
 		baseSpeed = baseSpeed + 40 
 	end
 	return (0.001 * altitude) + 166
@@ -196,32 +221,34 @@ function getSpeed(altitude, fast)
 end
 
 function spawnTanker(params)
-	local unit = params.unit
-	if unit == nil then
-		trigger.action.outText("Spawning failed", 10)
-		return
-	end
-	local unitpos = unit:getPosition()
+	local unitpos = params.unit:getPosition()
 	local heading = math.atan2(unitpos.x.z, unitpos.x.x)
+	env.info("heading set to " .. tostring(heading))
 	local start = getOffset(unitpos.p, heading, params.distance, params.altitude)	
 	local final = getOffset(start, heading, params.length, params.altitude)
 	local speed = getSpeed(params.altitude, params.fast)
-	local tankergroup = getTanker(start, final, speed, params.tankertype)
-	coalition.addGroup(unit:getCountry(),Group.Category.AIRPLANE, tankergroup)
+	env.info("speed set to " .. tostring(speed))
+	local tankergroup = getTanker(start, final, speed, params.tankertype, params.tacan, params.mode, params.freq)
+	env.info("tankergroup set")
+	coalition.addGroup(params.unit:getCountry(), Group.Category.AIRPLANE, tankergroup)
+	env.info("group added to " .. params.unit:getCountry())
 	trigger.action.outText("Spawned tanker", 10)
 end
 
-function registerSpawnTanker(me, distance, length, altitude, tankertype, fast)
-	local params = { 
-		["unit"]=me, 
-		["distance"]=distance, 
-		["length"]=length, 
-		["altitude"]=altitude, 
-		["type"] = tankerTypes[tankertype], 
-		["fast"]=fast 
+function registerSpawnTanker(me, distance, length, altitude, tankertype, fast, tacan, mode, freq)    
+	local command = "Spawn ".. tankerTypes[tankertype].name .. " " .. distance .. " NM ahead of " .. me:getName() .. " fast: " .. tostring(fast) .. " tacan " .. tacan .. mode .. " freq " .. freq	
+	local params = {
+		["unit"]=me,
+		["distance"]=distance,
+		["length"]=length,
+		["altitude"]=altitude,
+		["tankertype"] = tankerTypes[tankertype],
+		["fast"]=fast,
+		["tacan"]=tacan,
+		["mode"]=mode,
+		["freq"]=freq
 	}
-	var command = "Spawn ".. tankerTypes[tankertype] .. " " .. distance .. " NM ahead of " .. me:getName() .. " fast: " .. tostring(fast)
 	missionCommands.addCommand(command, nil, spawnTanker, params)
-	trigger.action.outText(command, 5)
+	trigger.action.outText(command, 15)
 	env.info(command)
 end
