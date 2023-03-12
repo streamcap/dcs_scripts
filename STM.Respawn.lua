@@ -15,26 +15,26 @@ LIMITATIONS:
 The groups in question are presumed to be single-unit groups only. If a multi-unit group is registered, the group will respawn as soon as the first registered unit in that group lands.
 ]]--
 do
-	local RespawnGroups = {}
-	local AirborneRespawnGroups = {}
-	local isRespawnActive = false
-	local recheckSchedule = -1
+	RespawnGroups = {}
+	AirborneRespawnGroups = {}
+	isRespawnActive = false
+	recheckSchedule = -1
 
-	local _registerAirGroupForRespawnOnLanding = function(name, isSpawnedAirborne)
-		env.info('Group ' .. name .. ' added to respawn monitoring.')
+	_registerAirGroupForRespawnOnLanding = function(name, isSpawnedAirborne)
 		table.insert(RespawnGroups, name);
 		if isSpawnedAirborne == true then
 			table.insert(AirborneRespawnGroups, name)
 		end
+		env.info('Group ' .. name .. ' added to respawn monitoring.')
 	end
 
-	local _registerAirGroupsForRespawnOnLanding = function(namesTable, isSpawnedAirborne)		
+	_registerAirGroupsForRespawnOnLanding = function(namesTable, isSpawnedAirborne)		
 		for i, u in namesTable do
 			_registerAirGroupForRespawnOnLanding(u, isSpawnedAirborne)
 		end
 	end
 
-	local _removeAirborneRespawnGroup = function(groupName)
+	_removeAirborneRespawnGroup = function(groupName)
 		local index = -1
 		if #AirborneRespawnGroups == 0 then return end
 		for i,u in pairs(AirborneRespawnGroups) do
@@ -43,7 +43,7 @@ do
 		if index > -1 then table.remove(AirborneRespawnGroups, index) end 
 	end
 
-	local _isRespawnAirborne = function(groupName)
+	_isRespawnAirborne = function(groupName)
 		for i, g in pairs(AirborneRespawnGroups) do
 			env.info('Checking airbornes for group ' .. groupName)
 			if g == groupName then return true end
@@ -51,14 +51,14 @@ do
 		return false
 	end
 
-	local _isRespawnRegistered = function(groupName)
+	_isRespawnRegistered = function(groupName)
 		for i, g in pairs(RespawnGroups) do
 			if g == groupName then return true end
 		end
 		return false
 	end
 
-	local _respawnGroupAndPurgeQueue = function(groupName)
+	_respawnGroupAndPurgeQueue = function(groupName)
 		timer.scheduleFunction(mist.respawnGroup,{groupName, true}, timer.getTime() + 2)
 		_removeAirborneRespawnGroup(groupName)
 		if recheckSchedule > -1 then
@@ -66,7 +66,7 @@ do
 		end
 	end
 	
-	local _respawnAircraft = function(groupName)
+	_respawnAircraft = function(groupName)
 		if _isRespawnAirborne(groupName) == false then return end
 		local group = Group.getByName(groupName)
 		if group then
@@ -85,7 +85,7 @@ do
 		end
 	end
 	
-	local _handleLanded = function(event)	
+	_handleLanded = function(event)	
 		if event.id ~= world.event.S_EVENT_ENGINE_SHUTDOWN and event.id ~= world.event.S_EVENT_CRASH then
 			return
 		end
@@ -100,7 +100,7 @@ do
 		STM.Respawn.respawnAircraft(groupName)
 	end
 
-	 local _handleTakeoff = function(event)
+	_handleTakeoff = function(event)
 		if event.id ~= world.event.S_EVENT_TAKEOFF then
 			return
 		end
@@ -112,7 +112,7 @@ do
 		table.insert(AirborneRespawnGroups, groupName)
 	end
 	
-	local _addEventHandlers = function()
+	_addEventHandlers = function()
 		world.addEventHandler(_handleLanded)
 		world.addEventHandler(_handleTakeoff)
 		env.info('Event handlers added.')

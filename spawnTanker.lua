@@ -199,8 +199,6 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq)
 	} -- end of ["tankerGroup"]
 end
 
-
-
 function getOffset(point, heading, nauticals, altfeet)
 	local metersDistance = nauticals * 1852
 	local metersAltitude = altfeet / 3.28
@@ -249,6 +247,6 @@ function registerSpawnTanker(me, distance, length, altitude, tankertype, fast, t
 		["freq"]=freq
 	}
 	missionCommands.addCommand(command, nil, spawnTanker, params)
-	trigger.action.outText(command, 15)
+	trigger.action.outText("Added command: " .. command, 15)
 	env.info(command)
 end

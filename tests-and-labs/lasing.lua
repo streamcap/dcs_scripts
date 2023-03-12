@@ -20,3 +20,4 @@ function clearLasers()
     end
     spots = {}
 end
+
