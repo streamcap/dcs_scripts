@@ -10,7 +10,3 @@ ctld.JTAC_smokeColour_BLUE = 1 -- BLUE side smoke colour -- Green = 0 , Red = 1,
 ctld.JTAC_jtacStatusF10 = true -- enables F10 JTAC Status menu
 ctld.JTAC_location = true -- shows location of target in JTAC message
 ctld.JTAC_lock =  "vehicle" -- "vehicle" OR "troop" OR "all" forces JTAC to only lock vehicles or troops or all ground units
-
-function activateJtac1()
-    ctld.JTACAutoLase('JTAC1', 1631)
-end
