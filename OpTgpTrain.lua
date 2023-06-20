@@ -57,7 +57,7 @@ function reportStageTwo(a)
     idCorrect = a.isCorrect
 
     if idCorrect then
-        trigger.action.outText("Correct! Please proceed.", 10)
+        trigger.action.outText("Correct! Please proceed to stage three.", 10)
         clearCommands()
         setupStageThree()
     else
