@@ -13,21 +13,56 @@
 
 
 units = {}
+spawnedUnits = {}
+destroyedUnits = {}
 targetgroupSize = 0;
+selectedTarget = nil;
 
 function scanUnitsForRecognitionTraining()
     local groundGroups = coalition.getGroups(coalition.side.RED, Group.Category.GROUND)
-    for index, group in pairs(groundGroups) do 
-        for jndex, unit in group:getUnits() do
-            for index,unit in pairs(j:getUnits()) do                
-                local id = #strobing+1
-                units[id] = unit
-            end            
+    for i, group in pairs(groundGroups) do 
+        for k,unit in pairs(group:getUnits()) do                
+            local id = #units + 1
+            units[id] = unit
         end
     end 
 end
 
+function resetTargetArea()
+    -- Find all units in target area
+    -- remove all units in target area
+end
 
+function runTrainingMoment()
+    resetTargetArea()
+    missionCommands.removeItem()
+    for i = 1, targetgroupSize do
+        spawnRandomUnitInTargetZone()
+    end
+    selectedTargetIndex = #spawnedUnits * math.random()
+    selectedTarget = spawnedUnits[selectedTargetIndex]
+    trigger.action.outText("Identify and destroy the " .. selectedTarget:getName(), 10)
+    world.addEventHandler(trackDead)
+end
+
+trackDead = {}
+function trackDead:onEvent(event)
+    if event.id ~= world.event.S_EVENT_DEAD then return end
+    if(event.initiator.getID() ~= selectedTarget.getID()) then
+        trigger.action.outText("Oh no! Wrong target.", 10)
+    else
+        trigger.action.outText("Good! Correct target.", 10)
+        selectedTarget = nil;
+        setupMenu();
+        world.removeEventHandler(trackDead)
+    end    
+end
+
+
+function setupMenu()
+    trigger.action.outText("Use F10 menu to try again.", 10)
+    missionCommands.addCommand("Ready!", nil, runTrainingMoment, nil)
+end
 
 function setup(size)
     scanUnitsForRecognitionTraining()
