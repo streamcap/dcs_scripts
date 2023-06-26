@@ -1,6 +1,6 @@
-starttime = nil
-startfuel = nil
-report = nil
+starttime = {}
+startfuel = {}
+report = {}
 precision = 1      -- The number of decimals in the reporting
 maxfuel = 22588    -- The max amount according to the Mission Editor loadout screen
 
@@ -17,7 +17,7 @@ function round(amount)   -- rounding using math.floor, one half and multiplier a
 end
 
 function reportFuel(aUnit, time)
-    if report == nil then return nil end
+    if report[aUnit:getID()] == nil then return nil end
     local fuel = getFuelAmount(aUnit)
     local msg = "Unit " .. aUnit:getName() .. " refueled " .. fuel .. " lbs at " .. timer.getTime()
     trigger.action.outText(msg, 5)
@@ -27,23 +27,23 @@ end
 refuelingStart = {}
 function refuelingStart:onEvent(event) 
 	if event.id ~= world.event.S_EVENT_REFUELING then return end
-    starttime = event.time
-    startfuel = getFuelAmount(event.initiator)
-    local msg = "Unit " .. event.initiator:getName() .. " started refuel with " .. startfuel .. " lbs at " .. starttime
+    starttime[event.initiator:getID()] = event.time
+    startfuel[event.initiator:getID()] = getFuelAmount(event.initiator)
+    local msg = "Unit " .. event.initiator:getName() .. " started refuel with " .. startfuel[event.initiator:getID()] .. " lbs at " .. starttime[event.initiator:getID()]
     env.info(msg)
     trigger.action.outText(msg, 5)
-    report = timer.scheduleFunction(reportFuel, event.initiator, timer.getTime() + 30)
+    report[event.initiator:getID()] = timer.scheduleFunction(reportFuel, event.initiator, timer.getTime() + 30)
 end
 
 refuelingStop = {}
 function refuelingStop:onEvent(event)
     if event.id ~= world.event.S_EVENT_REFUELING_STOP or event.initiator == nil then return end
-    if report ~= nil then 
-        timer.removeFunction(report) 
-        report = nil
+    if report[event.initiator:getID()] ~= nil then 
+        timer.removeFunction(report[event.initiator:getID()]) 
+        report[event.initiator:getID()] = nil
     end
-    local sumfuel = getFuelAmount(event.initiator, startfuel)
-    local sumtime = event.time - starttime
+    local sumfuel = getFuelAmount(event.initiator, startfuel[event.initiator:getID()])
+    local sumtime = event.time - starttime[event.initiator:getID()]
     local fuelPerMinute = round((sumfuel / sumtime) * 60)
     local msg = "Refueling complete. Unit " .. event.initiator:getName() .. " took on " .. sumfuel .. " fuel in " .. sumtime .. " seconds, or " .. fuelPerMinute .. " lbs per minute."
     env.info(msg)
@@ -52,4 +52,4 @@ end
 
 world.addEventHandler(refuelingStart)
 world.addEventHandler(refuelingStop)
-trigger.action.outText("Registering handlers done...",2)
+trigger.action.outText("Registering handlers done...", 2)
