@@ -7,8 +7,8 @@ feedback = false
 
 -- DO NOT CHANGE ANYTHING BELOW
 
-registered = {} -- track planes registered at start. Takes name.
-scoring = {} -- track which planes we are scoring, takes: id = {running = true, total = 0, onradial = 0, onaltitude = 0}
+registered = {} -- track planes registered at start. item: name.
+scores = {} -- track the scores on the track, item: [id] = {running = true, total = 0, onradial = 0, onaltitude = 0}
 
 conv = 0.3048
 
@@ -56,57 +56,56 @@ function getGrade(gradescore)
 	return grade
 end
 
-function reportStatSums(unit, seconds)
-	local id = unit:getID()
-	local score = scoring[id]
-	local radG = getGrade(score.onradial/score.total)
-	local altG = getGrade(score.onaltitude/score.total)
-
+function reportScores(id, score, radG, altG, seconds)
 	trigger.action.outTextForUnit(id, "Here is your final tally:", seconds)
 	trigger.action.outTextForUnit(id, "Total measured points: " .. score.total, seconds)
 	trigger.action.outTextForUnit(id, "Points on correct radial: " .. score.onradial, seconds)
 	trigger.action.outTextForUnit(id, "Points at correct altitude: " .. score.onaltitude, seconds)
 	trigger.action.outTextForUnit(id, "Final grade - radial: " .. radG, seconds)
 	trigger.action.outTextForUnit(id, "Final grade - altitude: " .. altG, seconds)
+end
 
+function logScores(name, score, radG, altG)		
+	env.info('Name|Total|OnRadial|OnAltitude|RadialScore|AltitudeScore')
+	env.info(table.concat({name, score.total, score.onradial, score.onaltitude, radG, altG}, '|'))
+end
+
+function reportStatSums(unit, seconds)
+	local id = unit:getID()
+	local score = scores[id]
+	local radG = getGrade(score.onradial/score.total)
+	local altG = getGrade(score.onaltitude/score.total)
+	reportScores(id, score, radG, seconds)
 	local name = unit:getPlayerName()
 	if(name == nil) then name = "AI PILOT" end
-
-	local header = 'Name|Total|OnRadial|OnAltitude|RadialScore|AltitudeScore'
-	local points = {name, tot, rad, alt, radG, altG}
-	env.info(header)
-	env.info(table.concat(points, '|'))
+	logScores(name, score, radG, altG)
 end
 
 function registerNewcomers()
 	local planes = mist.makeUnitTable({'[all][plane]'})
 	local unitsToRegister = mist.getUnitsInZones(planes, {'Station-1'})
-	env.info("Checking newcomers, " .. #unitsToRegister .. " found at ".. timer.getTime() .."...")
-	for i=1, #unitsToRegister do
-		local unitid = unitsToRegister[i]:getID()
-		env.info("Unit " .. unitid .." entered Station-1...")
-		if(scoring[unitid] == nil) then
-			registerUnit(unitsToRegister[i], unitid)
+	for u=1, #unitsToRegister do
+		local unit = unitsToRegister[u]
+		local unitid = unit:getID()
+		if(scores[unitid] == nil) then
+			table.insert(registered, unit:getName())
+			scores[unitid] = {running = true, total = 0, onradial = 0, onaltitude = 0}
+			env.info("Unit " .. unitid .." start registered...")
 			trigger.action.outTextForUnit(unitid, "Registered! Start flying the track!", 10)
 		end
 	end
 	timer.scheduleFunction(registerNewcomers, {}, timer.getTime() + 1)
 end
 
-function registerUnit(unit, id)
-	table.insert(registered, unit:getName())
-	scoring[id] = {running = true, total = 0, onradial = 0, onaltitude = 0}
-	env.info("Unit " .. id .." registered...")
-end
-
 function registerCompletions()
 	local planes = mist.makeUnitTable({'[all][plane]'})
 	local unitsToRegister = mist.getUnitsInZones(planes, {'Station-4'})
-	env.info("Checking completions, " .. #unitsToRegister .. " found at ".. timer.getTime() .."...")
 	for u=1, #unitsToRegister do
 		local unitid = unitsToRegister[u]:getID()
-		if(scoring[unitid].running == true) then
-			scoring[unitid].running = false
+		local score = scores[unitid]
+		if(score.running == true) then
+			score.running = false
+			env.info("Unit " .. unitid .." completion registered...")
 			trigger.action.outTextForUnit(unitid, "Track complete! Land as stated in the briefing to get the scores.", 10)
 		end
 	end
@@ -115,18 +114,17 @@ end
 
 function runTick()
 	local planes = mist.makeUnitTable({'[all][plane]'})
-	local onStations = mist.getUnitsInZones(planes, {'Station-1','Station-2','Station-3','Station-4'})
-	env.info("Checking scorings, " .. #scoring .. " tracked at " .. timer.getTime() .. "...")
+	local toExclude = mist.getUnitsInZones(planes, {'Station-1','Station-2','Station-3','Station-4'})
+	env.info("Checking scorings, " .. #scores .. " tracked at " .. timer.getTime() .. "...")
 	for r = 1, #registered do
 		local name = registered[r]
 		local unit = Unit.getByName(name)
-		local id = unit:getID()
-		env.info("Looping runTick for unit " .. name .. "...")
-		local msg = "unit: " .. id
-		local score = scoring[id]
+		local unitid = unit:getID()
+		local msg = "unit: " .. unitid
+		local score = scores[unitid]
 		local run = score.running
-		for s = 1, #onStations do
-			if(onStations[s]:getID() == id) then
+		for e = 1, #toExclude do
+			if(toExclude[e]:getID() == unitid) then
 				run = false
 				msg = msg .. ", skipping"
 			end
@@ -134,7 +132,7 @@ function runTick()
 		if(run == true) then				
 			score.total = score.total + 1
 			msg = msg .. ", tracking"
-			if(isInZones(planes, id, selectedZones)) then
+			if(isInZones(planes, unitid, selectedZones)) then
 				score.onradial = score.onradial + 1
 				msg = msg .. ", on radial"
 			end
@@ -143,9 +141,8 @@ function runTick()
 				msg = msg .. ", at altitude"
 			end
 		end
-		env.info(msg)
 		if(feedback == true) then
-			trigger.action.outTextForUnit(id, msg, 1)
+			trigger.action.outTextForUnit(unitid, msg, 1)
 			msg = nil
 		end	
 	end		
