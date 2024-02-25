@@ -121,7 +121,6 @@ end
 
 function addToScore()
 	local planes = mist.makeUnitTable({'[all][plane]'})
-	registerCompletions(planes)	
 	local onStations = mist.getUnitsInZones(planes, {'Station-1','Station-2','Station-3','Station-4'})
 	for i = 1, #scoring do
 		local unit = scoring[i]
