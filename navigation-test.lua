@@ -99,7 +99,7 @@ end
 
 function registerUnit(unit)
 	local unitid = unit:getID()
-	scoring[unitid] = unit
+	table.insert(scoring, unit)
 	total[unitid] = 0
 	onradial[unitid] = 0
 	onaltitude[unitid] = 0
@@ -109,10 +109,16 @@ end
 function registerCompletions()
 	local planes = mist.makeUnitTable({'[all][plane]'})
 	local unitsToRegister = mist.getUnitsInZones(planes, {'Station-4'})
+	env.info("Checking completions, " .. #unitsToRegister .. " found at ".. timer.getTime() .."...")
 	for i=1, #unitsToRegister do
 		local unitid = unitsToRegister[i]:getID()
+		for j=1, #scoring do
+			if(scoring[j].getID() == unitid) then
+				trigger.action.outTextForUnit(unitid, "Almost done! Now to land...", 30)
+				table.remove(scoring, j)
+			end
+		end
 		if(scoring[unitid] ~= nil) then
-			trigger.action.outTextForUnit(unitid, "Almost done! Now to land...", 30)
 			scoring[unitid] = nil
 		end
 	end
@@ -122,6 +128,7 @@ end
 function addToScore()
 	local planes = mist.makeUnitTable({'[all][plane]'})
 	local onStations = mist.getUnitsInZones(planes, {'Station-1','Station-2','Station-3','Station-4'})
+	env.info("Checking scorings, " .. #scoring .. " tracked at " .. timer.getTime() .. "...")
 	for i = 1, #scoring do
 		local unit = scoring[i]
 		local id = unit:getID()
