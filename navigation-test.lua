@@ -1,7 +1,7 @@
 -- To modify altitude, set minHeightFt and maxHeightFt as needed
 
 minHeightFt = 24000
-maxHeightFt = 25900
+maxHeightFt = 26000
 
 feedback = false
 
@@ -37,6 +37,19 @@ function isAtAltitude(unit)
 	return alt > minHeightFt*conv and alt < maxHeightFt*conv
 end
 
+function isInZones(planes, unitid, zones)
+	local match = false
+	for i = 1, #zones do
+		local zone = mist.getGroupPoints(zones[i])
+		local units = mist.getUnitsInPolygon(planes, zone)
+		for i = 1,#units do
+			if(units[i]:getID() == unitid) then return true end
+		end
+		return false
+	end
+	return match
+end
+
 function getGrade(gradescore)
 	local grade = 'F'
 	if(gradescore > 0.5)then grade = 'C' end
@@ -69,9 +82,9 @@ function reportStatSums(unit, seconds)
 	env.info(table.concat(points, '|'))
 end
 
-function registerNewcomers(planes)
+function registerNewcomers()
+	local planes = mist.makeUnitTable({'[all][plane]'})
 	local unitsToRegister = mist.getUnitsInZones(planes, {'Station-1'})
-	trigger.action.outText(mist.utils.tableShow(unitsToRegister), 2)
 	env.info("Checking newcomers, " .. #unitsToRegister .. " found at ".. timer.getTime() .."...")
 	for i=1, #unitsToRegister do
 		local unitid = unitsToRegister[i]:getID()
@@ -81,6 +94,7 @@ function registerNewcomers(planes)
 			trigger.action.outTextForUnit(unitid, "Registered! Start flying the track!", 30)
 		end
 	end
+	timer.scheduleFunction(registerNewcomers, {}, timer.getTime() + 1)
 end
 
 function registerUnit(unit)
@@ -92,7 +106,8 @@ function registerUnit(unit)
 	env.info("Unit " .. unitid .." registered...")
 end
 
-function registerCompletions(planes)
+function registerCompletions()
+	local planes = mist.makeUnitTable({'[all][plane]'})
 	local unitsToRegister = mist.getUnitsInZones(planes, {'Station-4'})
 	for i=1, #unitsToRegister do
 		local unitid = unitsToRegister[i]:getID()
@@ -101,29 +116,11 @@ function registerCompletions(planes)
 			scoring[unitid] = nil
 		end
 	end
-end
-
-function isInZone(unitid, zonename)
-	local zone = mist.getGroupPoints(zonename)
-	local planes = mist.makeUnitTable({'[plane]'})
-	local units = mist.getUnitsInPolygon(planes, zone)
-	for i = 1,#units do
-		if(units[i]:getID() == unitid) then return true end
-	end
-	return false
-end
-
-function isInZones(unitid, zones)
-	local match = false
-	for i = 1, #zones do
-		match = isInZone(unitid, zones[i])
-	end
-	return match
+	timer.scheduleFunction(registerCompletions, {}, timer.getTime() + 1)
 end
 
 function addToScore()
-	local planes = mist.makeUnitTable({'[plane]'})
-	registerNewcomers(planes)
+	local planes = mist.makeUnitTable({'[all][plane]'})
 	registerCompletions(planes)	
 	local onStations = mist.getUnitsInZones(planes, {'Station-1','Station-2','Station-3','Station-4'})
 	for i = 1, #scoring do
@@ -141,7 +138,7 @@ function addToScore()
 		if(skip ~= true) then
 			total[id] = total[id] + 1
 			msg = msg .. ", tracking"
-			if(isInZones(id, selectedZones)) then
+			if(isInZones(planes, id, selectedZones)) then
 				onradial[id] = onradial[id] + 1
 				msg = msg .. ", on radial"
 			end
@@ -175,7 +172,9 @@ end
 world.addEventHandler(informStarted)
 world.addEventHandler(reportLanded)
 
-timer.scheduleFunction(addToScore, {}, timer.getTime() + 10)
+timer.scheduleFunction(addToScore, {}, timer.getTime() + 5)
+timer.scheduleFunction(registerNewcomers, {}, timer.getTime() + 5)
+timer.scheduleFunction(registerCompletions, {}, timer.getTime() + 5)
 
 env.setErrorMessageBoxEnabled(true)
 
