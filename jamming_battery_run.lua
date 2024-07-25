@@ -10,12 +10,10 @@
 -- ** Set the tables as shown below, for instance in a separate file
 
 function restartWideBandJamming()
-    if(type(jammers) ~= "table") {
-        jammers = {}
-    }
-    if(type(jammerZones) ~= "table") {
-        jammerZones = {}
-    }
+    if (type(jammers) ~= "table") then jammers = {} end
+
+    if (type(jammerZones) ~= "table") then         jammerZones = {} end
+
     jammings = {}
     startMHz = 250
     stopMHz = 310

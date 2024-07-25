@@ -1,12 +1,12 @@
 function booms(points)
 	-- trigger.action.outText('Running booms...', 3)	
 	for i, u in pairs(points) do		
-		if(u == nil or u.p == nil or u.load == nil or type(u.p) ~= "table" or type(u.load) == "number") {
+		if(u == nil or u.p == nil or u.load == nil or type(u.p) ~= "table" or type(u.load) == "number") then
 			env.info("The booms function takes a table of explosion params as input.")
 			env.info("Each explosion param is 'p' - a 3d point of the location, and 'load' - an amount")
 			env.info("Check the source file for examples on the Caucasus map.")
 			trigger.action.outText("Error in function call booms, check log",10)
-		}
+		end
 		trigger.action.explosion(u.p, u.load)
 	end
 	-- trigger.action.outText('Booms run!', 3)
