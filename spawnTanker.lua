@@ -11,42 +11,42 @@
 -- freq: radio frequency in MHz for the tanker's radio in MHz (e.g., 251.0)
 
 
-a6ePylons = 
+a6ePylons =
 {
-	[1] = {["CLSID"] = "{HB_A6E_AERO1D}"},
-	[2] = {["CLSID"] = "{HB_A6E_AERO1D}"},
-	[3] = {["CLSID"] = "{HB_A6E_D704}"},
-	[4] = {["CLSID"] = "{HB_A6E_AERO1D}"},
-	[5] = {["CLSID"] = "{HB_A6E_AERO1D}"},
+	[1] = { ["CLSID"] = "{HB_A6E_AERO1D}" },
+	[2] = { ["CLSID"] = "{HB_A6E_AERO1D}" },
+	[3] = { ["CLSID"] = "{HB_A6E_D704}" },
+	[4] = { ["CLSID"] = "{HB_A6E_AERO1D}" },
+	[5] = { ["CLSID"] = "{HB_A6E_AERO1D}" },
 }
 
-tankerTypes = 
+tankerTypes =
 {
-	[1] = {["name"]="KC-135",["fuel"]="90500", ["pylons"] = {}, ["minAlt"] = 10000},
-	[2] = {["name"]="KC135MPRS",["fuel"]="90500", ["pylons"] = {}, ["minAlt"] = 10000},
-	[3] = {["name"]="S-3B Tanker",["fuel"]="6880", ["pylons"] = {}, ["minAlt"] = 10000},
-	[4] = {["name"]="KC130",["fuel"]="29900", ["pylons"] = {}, ["minAlt"] = 5000},
-	[5] = {["name"]="A6E",["fuel"]="7220", ["pylons"] = a6ePylons, ["minAlt"] = 10000},
+	[1] = { ["name"] = "KC-135", ["fuel"] = "90500", ["pylons"] = {}, ["minAlt"] = 10000 },
+	[2] = { ["name"] = "KC135MPRS", ["fuel"] = "90500", ["pylons"] = {}, ["minAlt"] = 10000 },
+	[3] = { ["name"] = "S-3B Tanker", ["fuel"] = "6880", ["pylons"] = {}, ["minAlt"] = 10000 },
+	[4] = { ["name"] = "KC130", ["fuel"] = "29900", ["pylons"] = {}, ["minAlt"] = 5000 },
+	[5] = { ["name"] = "A6E", ["fuel"] = "7220", ["pylons"] = a6ePylons, ["minAlt"] = 10000 },
 }
 
-function tacanFrequency( channel, mode )
-    if ( mode == "Y" and channel < 64 ) then
-        local basef = 1087000000
-        local offset = 1000000 * channel
-        return basef + offset
-    elseif( mode == "X" and channel < 64 ) then
-        local basef = 961000000
-        local offset = 1000000 * channel
-        return basef + offset
-    elseif ( mode == "Y" and channel > 63 ) then
-        local basef = 961000000
-        local offset = 1000000 * channel
-        return basef + offset
-    elseif( mode == "X" and channel > 63 ) then
-        local basef = 1087000000
-        local offset = 1000000 * channel
-        return basef + offset
-    end        
+function tacanFrequency(channel, mode)
+	if (mode == "Y" and channel < 64) then
+		local basef = 1087000000
+		local offset = 1000000 * channel
+		return basef + offset
+	elseif (mode == "X" and channel < 64) then
+		local basef = 961000000
+		local offset = 1000000 * channel
+		return basef + offset
+	elseif (mode == "Y" and channel > 63) then
+		local basef = 961000000
+		local offset = 1000000 * channel
+		return basef + offset
+	elseif (mode == "X" and channel > 63) then
+		local basef = 1087000000
+		local offset = 1000000 * channel
+		return basef + offset
+	end
 end
 
 function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
@@ -59,45 +59,45 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 	return {
 		["radioSet"] = true,
 		["task"] = "Refueling",
-		["route"] = 
+		["route"] =
 		{
-			["points"] = 
+			["points"] =
 			{
-				[1] = 
+				[1] =
 				{
 					["alt"] = start.y,
 					["action"] = "Turning Point",
 					["alt_type"] = "BARO",
 					["speed"] = speed,
-					["task"] = 
+					["task"] =
 					{
 						["id"] = "ComboTask",
-						["params"] = 
+						["params"] =
 						{
-							["tasks"] = 
+							["tasks"] =
 							{
-								[1] = 
+								[1] =
 								{
 									["enabled"] = true,
 									["auto"] = true,
 									["id"] = "Tanker",
 									["number"] = 1,
-									["params"] = 
+									["params"] =
 									{
 									}, -- end of ["params"]
 								}, -- end of [1]
-								[2] = 
+								[2] =
 								{
 									["enabled"] = true,
 									["auto"] = false,
 									["id"] = "WrappedAction",
 									["number"] = 2,
-									["params"] = 
+									["params"] =
 									{
-										["action"] = 
+										["action"] =
 										{
 											["id"] = "Option",
-											["params"] = 
+											["params"] =
 											{
 												["value"] = true,
 												["name"] = 6,
@@ -105,18 +105,18 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 										}, -- end of ["action"]
 									}, -- end of ["params"]
 								}, -- end of [2]
-								[3] = 
+								[3] =
 								{
 									["enabled"] = true,
 									["auto"] = true,
 									["id"] = "WrappedAction",
 									["number"] = 2,
-									["params"] = 
+									["params"] =
 									{
-										["action"] = 
+										["action"] =
 										{
 											["id"] = "ActivateBeacon",
-											["params"] = 
+											["params"] =
 											{
 												["type"] = 4,
 												["AA"] = false,
@@ -131,13 +131,13 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 										}, -- end of ["action"]
 									}, -- end of ["params"]
 								}, -- end of [2]
-								[4] = 
+								[4] =
 								{
 									["enabled"] = true,
 									["auto"] = false,
 									["id"] = "Orbit",
 									["number"] = 3,
-									["params"] = 
+									["params"] =
 									{
 										["altitudeEdited"] = true,
 										["pattern"] = "Race-Track",
@@ -157,18 +157,18 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 					["formation_template"] = "",
 					["speed_locked"] = true,
 				}, -- end of [1]
-				[2] = 
+				[2] =
 				{
 					["alt"] = start.y,
 					["action"] = "Turning Point",
 					["alt_type"] = "BARO",
 					["speed"] = speed,
-					["task"] = 
+					["task"] =
 					{
 						["id"] = "ComboTask",
-						["params"] = 
+						["params"] =
 						{
-							["tasks"] = 
+							["tasks"] =
 							{
 							}, -- end of ["tasks"]
 						}, -- end of ["params"]
@@ -183,9 +183,9 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 				}, -- end of [2]
 			}, -- end of ["points"]
 		}, -- end of ["route"]
-		["units"] = 
+		["units"] =
 		{
-			[1] = 
+			[1] =
 			{
 				["alt"] = start.y,
 				["alt_type"] = "BARO",
@@ -196,8 +196,8 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 				["psi"] = -1 * heading,
 				["y"] = start.z,
 				["x"] = start.x,
-				["name"] = "Aerial-1-1",
-				["payload"] = 
+				["name"] = "Tanker-1-1",
+				["payload"] =
 				{
 					["pylons"] = pylons,
 					["fuel"] = tankertype.fuel,
@@ -206,7 +206,7 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 					--["gun"] = 100,
 				}, -- end of ["payload"]
 				["heading"] = heading,
-				["callsign"] = 
+				["callsign"] =
 				{
 					[1] = 1,
 					[2] = 1,
@@ -228,26 +228,25 @@ function getOffset(point, heading, nauticals, altfeet)
 	local metersDistance = nauticals * 1852
 	local metersAltitude = altfeet / 3.28
 	return {
-		x=point.x + (metersDistance * math.cos(heading)), 
-		y=metersAltitude, 
-		z=point.z + (metersDistance * math.sin(heading))
+		x = point.x + (metersDistance * math.cos(heading)),
+		y = metersAltitude,
+		z = point.z + (metersDistance * math.sin(heading))
 	}
 end
 
-function getSpeed(altitude, isfast) 
+function getSpeed(altitude, isfast)
 	local baseSpeed = 126
-	if isfast then 
-		baseSpeed = baseSpeed + 40 
+	if isfast then
+		baseSpeed = baseSpeed + 40
 	end
 	return (0.001 * altitude) + 166
-
 end
 
 function spawnTanker(params)
 	local unitpos = params.unit:getPosition()
 	local heading = math.atan2(unitpos.x.z, unitpos.x.x)
 	env.info("heading set to " .. tostring(heading))
-	local start = getOffset(unitpos.p, heading, params.distance, params.altitude)	
+	local start = getOffset(unitpos.p, heading, params.distance, params.altitude)
 	local final = getOffset(start, heading, params.length, params.altitude)
 	local speed = getSpeed(params.altitude, params.fast)
 	env.info("speed set to " .. tostring(speed))
@@ -263,19 +262,34 @@ function registerSpawnTanker(me, distance, length, altitude, tankertype, fast, t
 	if altitude < type.minAlt then
 		altitude = type.minAlt
 	end
-	local command = "Spawn ".. tankerTypes[tankertype].name .. " " .. distance .. " NM ahead of " .. me:getName() .. " fast: " .. tostring(fast) .. " tacan " .. tacan .. mode .. " freq " .. freq	
+	local command = "Spawn " ..
+	tankerTypes[tankertype].name ..
+	" " ..
+	distance ..
+	" NM ahead of " .. me:getName() .. " fast: " .. tostring(fast) .. " tacan " .. tacan .. mode .. " freq " .. freq
 	local params = {
-		["unit"]=me,
-		["distance"]=distance,
-		["length"]=length,
-		["altitude"]=altitude,
+		["unit"] = me,
+		["distance"] = distance,
+		["length"] = length,
+		["altitude"] = altitude,
 		["tankertype"] = tankerTypes[tankertype],
-		["fast"]=fast,
-		["tacan"]=tacan,
-		["mode"]=mode,
-		["freq"]=freq
+		["fast"] = fast,
+		["tacan"] = tacan,
+		["mode"] = mode,
+		["freq"] = freq
 	}
 	missionCommands.addCommand(command, nil, spawnTanker, params)
 	trigger.action.outText("Added command: " .. command, 15)
 	env.info(command)
+end
+
+function getActivePlayer(coal)
+	local units = coalition.getPlayers(coal)
+	for i = 1, #units do
+		local a = units[i]
+		if (a ~= nil) then
+			return a
+		end
+	end
+	return {}
 end
