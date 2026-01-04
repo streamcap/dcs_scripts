@@ -1,9 +1,32 @@
+-- USAGE:
+-- In a mission script, call registerSpawnTanker with the following parameters:
+-- unit: the unit object that will have the command added to its menu
+-- distance: distance in nautical miles ahead of the unit to spawn the tanker
+-- length: length in nautical miles of the tanker's refueling track
+-- altitude: altitude in feet for the tanker
+-- tankertype: integer index of the tanker type (1=KC-135, 2=KC135MPRS, 3=S-3B Tanker, 4=KC130, 5=A6E)
+-- fast: boolean, if true the tanker will fly at a higher speed (about +40 knots IAS)
+-- tacan: integer channel for the tanker's TACAN channel (1-126)
+-- mode: string "X" or "Y" for the TACAN mode  (NOTE: This is broken in DCS 2.7.x and earlier)
+-- freq: radio frequency in MHz for the tanker's radio in MHz (e.g., 251.0)
+
+
+a6ePylons = 
+{
+	[1] = {["CLSID"] = "{HB_A6E_AERO1D}"},
+	[2] = {["CLSID"] = "{HB_A6E_AERO1D}"},
+	[3] = {["CLSID"] = "{HB_A6E_D704}"},
+	[4] = {["CLSID"] = "{HB_A6E_AERO1D}"},
+	[5] = {["CLSID"] = "{HB_A6E_AERO1D}"},
+}
+
 tankerTypes = 
 {
-	[1] = {["name"]="KC-135",["fuel"]="90500"},
-	[2] = {["name"]="KC135MPRS",["fuel"]="90500"},
-	[3] = {["name"]="S-3B Tanker",["fuel"]="7800"},
-	[4] = {["name"]="KC130",["fuel"]="29500"}
+	[1] = {["name"]="KC-135",["fuel"]="90500", ["pylons"] = {}, ["minAlt"] = 10000},
+	[2] = {["name"]="KC135MPRS",["fuel"]="90500", ["pylons"] = {}, ["minAlt"] = 10000},
+	[3] = {["name"]="S-3B Tanker",["fuel"]="6880", ["pylons"] = {}, ["minAlt"] = 10000},
+	[4] = {["name"]="KC130",["fuel"]="29900", ["pylons"] = {}, ["minAlt"] = 5000},
+	[5] = {["name"]="A6E",["fuel"]="7220", ["pylons"] = a6ePylons, ["minAlt"] = 10000},
 }
 
 function tacanFrequency( channel, mode )
@@ -26,8 +49,12 @@ function tacanFrequency( channel, mode )
     end        
 end
 
-function getTanker(start, final, speed, tankertype, tacan, mode, freq)
+function getTanker(start, final, speed, tankertype, tacan, mode, freq, heading)
 	local tacanFreq = tacanFrequency(tacan, mode)
+	local pylons = tankertype.pylons
+	if (pylons == nil) then
+		pylons = {}
+	end
 	trigger.action.outText("Set tacan " .. tacan .. mode .. " and freq " .. freq, 10)
 	return {
 		["radioSet"] = true,
@@ -166,21 +193,19 @@ function getTanker(start, final, speed, tankertype, tacan, mode, freq)
 				["skill"] = "High",
 				["speed"] = speed,
 				["type"] = tankertype.name,
-				["psi"] = -2.0158125515504,
+				["psi"] = -1 * heading,
 				["y"] = start.z,
 				["x"] = start.x,
 				["name"] = "Aerial-1-1",
 				["payload"] = 
 				{
-					["pylons"] = 
-					{
-					}, -- end of ["pylons"]
+					["pylons"] = pylons,
 					["fuel"] = tankertype.fuel,
 					["flare"] = 30,
 					["chaff"] = 30,
 					--["gun"] = 100,
 				}, -- end of ["payload"]
-				["heading"] = 1.57,
+				["heading"] = heading,
 				["callsign"] = 
 				{
 					[1] = 1,
@@ -226,14 +251,18 @@ function spawnTanker(params)
 	local final = getOffset(start, heading, params.length, params.altitude)
 	local speed = getSpeed(params.altitude, params.fast)
 	env.info("speed set to " .. tostring(speed))
-	local tankergroup = getTanker(start, final, speed, params.tankertype, params.tacan, params.mode, params.freq)
+	local tankergroup = getTanker(start, final, speed, params.tankertype, params.tacan, params.mode, params.freq, heading)
 	env.info("tankergroup set")
 	coalition.addGroup(params.unit:getCountry(), Group.Category.AIRPLANE, tankergroup)
 	env.info("group added to " .. params.unit:getCountry())
-	trigger.action.outText("Spawned tanker", 10)
+	trigger.action.outText("Spawned tanker with heading " .. tostring(heading) .. " and speed " .. tostring(speed), 10)
 end
 
-function registerSpawnTanker(me, distance, length, altitude, tankertype, fast, tacan, mode, freq)    
+function registerSpawnTanker(me, distance, length, altitude, tankertype, fast, tacan, mode, freq)
+	local type = tankerTypes[tankertype]
+	if altitude < type.minAlt then
+		altitude = type.minAlt
+	end
 	local command = "Spawn ".. tankerTypes[tankertype].name .. " " .. distance .. " NM ahead of " .. me:getName() .. " fast: " .. tostring(fast) .. " tacan " .. tacan .. mode .. " freq " .. freq	
 	local params = {
 		["unit"]=me,
